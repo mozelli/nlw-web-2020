@@ -28,8 +28,9 @@
 }
 
 #page-teacher-form main fieldset legend {
-    display: grid;
-    grid-template-columns: 3fr 1fr;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font: 700 2.4rem Archivo;
     color: var(--color-text-title);
     margin-bottom: 2.4rem;
