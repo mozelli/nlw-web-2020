@@ -1,14 +1,19 @@
 import React, { useState, FormEvent } from "react";
+import { useHistory } from "react-router-dom";
 
 import PageHeader from "../../components/PageHeader";
 import Input from "../../components/Input";
 import Textarea from "../../components/Textarea";
 import Select from "../../components/Select";
 
+import api from "../../services/api";
+
 import "./styles.css";
 import warningIcon from "../../assets/images/icons/warning.svg";
 
 function TeacherForm() {
+    const history = useHistory();
+
     const [ name, setName ] = useState("");
     const [ avatar, setAvatar ] = useState("");
     const [ whatsapp, setWhatsapp ] = useState("");
@@ -17,17 +22,54 @@ function TeacherForm() {
     const [ subject, setSubject ] = useState("");
     const [ cost, setCost] = useState("");
 
+    const [scheduleItems, setScheduleItems] = useState([
+        { week_day: 0, from: "", to: "" },
+    ]);
+
+    function setScheduleItemValue(index: number, field: string, value: string) {
+        const newItemsArray = scheduleItems.map((scheduleItem, position) => {
+            if (index === position) {
+                return { ...scheduleItem, [field]: value }
+            }
+            return scheduleItem;
+        });
+
+        setScheduleItems(newItemsArray);
+    }
+
+    function addNewScheduleItem() {
+        setScheduleItems([
+            ...scheduleItems,
+            { week_day: 0, from: "", to: "" },
+        ]);
+    }
+
     function handleSubmit(event: FormEvent) {
+        event.preventDefault();
         console.log({
             name,
             avatar,
             whatsapp,
             bio,
-            subject, 
-            cost
+            subject,
+            cost: Number(cost),
+            schedule: scheduleItems
         });
-
-        event.preventDefault();
+        api.post('classes', {
+            name,
+            avatar,
+            whatsapp,
+            bio,
+            subject,
+            cost: Number(cost),
+            schedule: scheduleItems
+        }).then(() => {
+            alert("Cadastro realizado com sucesso!");
+            history.push("/");
+        }).catch((error) => {
+            alert("Ops! Ocorreu um erro ao tentar realizar o cadastro.");
+            console.error("Ocorreu um erro: " + error);
+        });
     }
 
     return (
@@ -96,29 +138,50 @@ function TeacherForm() {
                                 Horários disponíveis 
                             </p>
                             <p>
-                                <button type="button">
+                                <button type="button" onClick={ addNewScheduleItem }>
                                     + Novo horário
                                 </button>
                             </p>
                             
                         </legend>
-                        <div className="schedule-item">
-                            <Select 
-                                name="week_day" 
-                                label="Dia da semana" 
-                                options={ [
-                                    { value: "0", label: "Domingo" },
-                                    { value: "1", label: "Segunda-feira" },
-                                    { value: "2", label: "Terça-feira" },
-                                    { value: "3", label: "Quarta-feira" },
-                                    { value: "4", label: "Quinta-feira" },
-                                    { value: "5", label: "Sexta-feira" },
-                                    { value: "6", label: "Sábado" },
-                                ] }
-                            />
-                            <Input name="from" label="Das" type="time" />
-                            <Input name="to" label="às" type="time" />
-                        </div>
+                        { scheduleItems.map((scheduleItem, index) => {
+                            return (
+                                <div className="schedule-item" key={ index }>
+                                    <Select 
+                                        name="week_day" 
+                                        label="Dia da semana" 
+                                        value={ scheduleItem.week_day }
+                                        onChange={ 
+                                            event => setScheduleItemValue(index, "week_day", event.target.value) 
+                                        }
+                                        options={ [
+                                            { value: "0", label: "Domingo" },
+                                            { value: "1", label: "Segunda-feira" },
+                                            { value: "2", label: "Terça-feira" },
+                                            { value: "3", label: "Quarta-feira" },
+                                            { value: "4", label: "Quinta-feira" },
+                                            { value: "5", label: "Sexta-feira" },
+                                            { value: "6", label: "Sábado" },
+                                        ] }
+                                    />
+                                    <Input 
+                                        name="from" 
+                                        label="Das" 
+                                        type="time"
+                                        value={ scheduleItem.from }
+                                        onChange={ event => setScheduleItemValue(index, "from", event.target.value) } 
+                                    />
+                                    <Input 
+                                        name="to" 
+                                        label="às" 
+                                        type="time"
+                                        value={ scheduleItem.to }
+                                        onChange={ event => setScheduleItemValue(index, "to", event.target.value) } 
+                                    />
+                                </div>
+                            );
+                        }) }
+                        
                     </fieldset>
                     <footer>
                         <p>
